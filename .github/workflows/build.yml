@@ -1,1 +1,46 @@
+name: Build APK
 
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Tulis source
+        run: bash build.sh
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.2'
+
+      - name: Build APK
+        run: gradle assembleDebug --no-daemon
+
+      - name: Simpan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RicoRat-APK
+          path: |
+            agent/build/outputs/apk/debug/*.apk
+            controller/build/outputs/apk/debug/*.apk
+
+      - name: Buat Release (link download)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0
+          name: RicoRat v1.0
+          files: |
+            agent/build/outputs/apk/debug/*.apk
+            controller/build/outputs/apk/debug/*.apk
